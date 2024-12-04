@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 const Navbar: React.FC = () => {
@@ -10,9 +11,9 @@ const Navbar: React.FC = () => {
         <div className="flex space-x-36">
           {" "}
           {/* Увеличаваме разстоянието */}
-          <a href="#" className="text-xl font-bold hover:underline">
+          <Link href="/game" className="text-xl font-bold hover:underline">
             Игра
-          </a>
+          </Link>
           <a href="#" className="text-xl font-bold hover:underline">
             Класация
           </a>
