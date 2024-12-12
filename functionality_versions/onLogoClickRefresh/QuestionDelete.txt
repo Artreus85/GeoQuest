@@ -1,0 +1,5 @@
+GeoQuestQuestions.filter(() => {
+    for(let index: number = 0; index < GeoQuestQuestions.length; index++) {
+        GeoQuestQuestions[index].questionUID === delQuestionUID ? index : null;
+    }
+});

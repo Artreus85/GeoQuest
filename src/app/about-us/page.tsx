@@ -10,14 +10,11 @@ export default function AboutUs() {
             <MainContent
                 content={
                     <div className="bg-white shadow-2xl rounded-lg p-16 max-w-5xl w-full">
-                        <h1 className="text-4xl font-bold text-center mb-8">За нас</h1>
-
+                        <h1 className="text-4xl font-bold text-center mb-8"> За GeoQuest </h1>
 
                         <p className="text-gray-700 text-xl text-center mb-12 leading-relaxed">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-                            minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-                            aliquip ex ea commodo consequat.
+                            GeoQuest е уеб приложение-игра, в която потребителят разпознава географски обекти по снимки. <br/>
+                            Като за всеки познат въпрос, той трупа точки, с който да се изкачва нагоре в класацията от потребители.
                         </p>
 
                         <div className="flex justify-center">

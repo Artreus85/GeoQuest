@@ -78,25 +78,26 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, up
 import { setDoc, doc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore'; // Import Firestore functions
 import { getDoc } from "firebase/firestore";
 
-export const registerWithEmail = async (email: string, password: string, username: string, nickname: string, role: string = "user") => {
+export const registerWithEmail = async (email: string, password: string, username: string, nickname: string, role: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
   // Update the profile with the username in Firebase Auth
   await updateProfile(userCredential.user, { displayName: username });
 
   // If the email is a specific admin email, assign the "admin" role
-  const isAdmin = email === "petiopetkov20a@gmail.com"; // Replace with your admin's email
-  const userRole = isAdmin ? "admin" : role; // Set role to "admin" if condition matches
+  const isAdmin = (email === "petiopetkov20a@gmail.com"); // Replace with your admin's email
+  isAdmin ? role = "admin" : role = "user"; // Set role to "admin" if condition matches
 
   // Save the user’s details in Firestore with the role (default to "user")
-  await setDoc(doc(db, 'users', userCredential.user.uid), {
+  await setDoc(doc(db, 'Users', userCredential.user.uid), {
     username,
     email,
     createdAt: new Date(),
-    role: userRole, // Store the role (either "user" or "admin")
+    role, // Store the role (either "user" or "admin")
+    uid: userCredential.user.uid,
+    points: 100
   });
 
-  
   // Return the updated user with displayName
   return userCredential.user;
 };
@@ -107,7 +108,7 @@ export const loginWithUsernameOrEmail = async (identifier: string, password: str
   // Check if the identifier is a username (not an email)
   if (!identifier.includes('@')) {
     // Query Firestore to find the email associated with the username
-    const usersRef = collection(db, 'users');
+    const usersRef = collection(db, 'Users');
     const q = query(usersRef, where('username', '==', identifier));
     const querySnapshot = await getDocs(q);
 
@@ -133,11 +134,11 @@ export const logout = async () => {
 };
 
 export const getUserRole = async (uid: string) => {
-  const userDocRef = doc(db, 'users', uid);
+  const userDocRef = doc(db, 'Users', uid);
   const docSnap = await getDoc(userDocRef);
   
   if (docSnap.exists()) {
-    return docSnap.data().role;  // Return the role (e.g., "user" or "admin")
+    return docSnap.data().role;  // Връща ролята на потребителя - админ или обикновен потрбител
   } else {
     throw new Error("User not found");
   }

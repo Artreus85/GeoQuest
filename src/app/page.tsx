@@ -1,12 +1,15 @@
 "use client"
 
 import Footer from "@/components/footer";
-import LoginForm from "@/components/login";
 import MainContent from "@/components/main-content";
 import Navbar from "@/components/navbar";
-import RegisterForm from "@/components/registration";
+
+import RegisterForm from "./register/page";
+import LoginForm from "./login/page";
+
 import Head from "next/head";
 import Image from "next/image";
+
 import { useState, useEffect } from "react";
 
 export default function Home() {

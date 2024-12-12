@@ -1,0 +1,294 @@
+"use client";
+
+import React, { useState } from "react";
+import Navbar from "@/components/navbar";
+import MainContent from "@/components/main-content";
+import Footer from "@/components/footer";
+import GameQuestion from "@/components/game-question";
+
+export class Question {
+    questionUID: string;
+    mainQuestion: string;
+    mainQuestionOptions: string[];
+    mainQuestionCorrectAnswer: string;
+
+    subQuestions: string[];
+    subQuestionsOptions: string[][];
+    subQuestionsCorrectAnswers: string[];
+
+    imageURL: string;
+
+    constructor(aMainQuestion: string, aMainQuestionOptions: string[], aMainQuestionCorrectAnswer: string, aSubQuestions: string[], aSubQuestionsOptions: string[][], aSubQuestionsCorrectAnswers: string[], aImageURL: string) {
+        this.questionUID = GenerateQuestionUID();
+        
+        this.mainQuestion = aMainQuestion;
+        this.mainQuestionOptions = aMainQuestionOptions;
+        this.mainQuestionCorrectAnswer = aMainQuestionCorrectAnswer;
+
+        this.subQuestions = aSubQuestions;
+        this.subQuestionsOptions = aSubQuestionsOptions;
+        this.subQuestionsCorrectAnswers = aSubQuestionsCorrectAnswers;
+
+        this.imageURL = aImageURL;
+    }
+}
+
+let GeoQuestQuestions: Question[] = []
+
+function GenerateQuestionUID() {
+    return "question-" + GeoQuestQuestions.length;
+}
+
+function AddQuestion(
+    mainQuestion: string, 
+    mainQuestionOptions: string[], 
+    mainQuestionCorrectAnswer: string,
+
+    subQuestions: string[],
+    subQuestionsOptions: string[][],
+    subQuestionsCorrectAnswers: string[],
+
+    imageURL: string
+) {
+    GeoQuestQuestions.push(new Question(mainQuestion, mainQuestionOptions, mainQuestionCorrectAnswer, subQuestions, subQuestionsOptions, subQuestionsCorrectAnswers, imageURL));
+    
+    console.log(GeoQuestQuestions[GeoQuestQuestions.length - 1].questionUID + "has just been added to the GeoQuest questions successfully.");
+}
+
+function DeleteQuestion(delQuestionUID: string) {
+    const questionIndexToDelete = GeoQuestQuestions.findIndex(question => question.questionUID === delQuestionUID);
+
+    if (questionIndexToDelete !== -1) {
+        GeoQuestQuestions.splice(questionIndexToDelete, 1);
+    }
+}
+
+function InitQuestions() {
+    AddQuestion("Къде се намира обектът от снимката?", 
+                   ["Германия", "Италия", "Франция"],
+                   "Франция", 
+                   
+                   ["Каква е основната причина за построяването на Айфеловата кула?", 
+                    "Колко време е отнело построяването на кулата?", 
+                    "Какво е било предназначението на кулата след изтичането на първоначалния ѝ договор?"], 
+                    [
+                      ["За Световното изложение през 1889 г.", 
+                       "За отбелязване на победа във война", 
+                       "За научни експерименти"], 
+
+                      ["2 години", 
+                       "5 години", 
+                       "3 години"], 
+
+                      ["Да бъде демонтирана", 
+                       "Да се използва за жилищни нужди", 
+                       "Да се превърне в паметник на инженерството"]], 
+                       
+                      ["За Световното изложение през 1889 г.", 
+                       "2 години", 
+                       "Да бъде демонтирана"], 
+                       
+                       "https://drive.google.com/file/d/1aHlD8tNuvgJkzz_9LgYJp-8on2xEuJsA/view?usp=drive_link"
+                );
+
+  AddQuestion("Къде се намира обектът от снимката?", 
+                   ["Германия", "Италия", "Франция"],
+                   "Франция", 
+                   
+                   ["Каква е основната причина за построяването на Айфеловата кула?", 
+                    "Колко време е отнело построяването на кулата?", 
+                    "Какво е било предназначението на кулата след изтичането на първоначалния ѝ договор?"], 
+                    [
+                      ["За Световното изложение през 1889 г.", 
+                       "За отбелязване на победа във война", 
+                       "За научни експерименти"], 
+
+                      ["2 години", 
+                       "5 години", 
+                       "3 години"], 
+
+                      ["Да бъде демонтирана", 
+                       "Да се използва за жилищни нужди", 
+                       "Да се превърне в паметник на инженерството"]], 
+                       
+                      ["За Световното изложение през 1889 г.", 
+                       "2 години", 
+                       "Да бъде демонтирана"], 
+                       
+                       "https://drive.google.com/file/d/1aHlD8tNuvgJkzz_9LgYJp-8on2xEuJsA/view?usp=drive_link"
+  );
+
+              console.log("Length: " + GeoQuestQuestions.length);
+
+              GeoQuestQuestions.splice(GeoQuestQuestions.length - 1, 1);
+              GeoQuestQuestions.splice(GeoQuestQuestions.length - 1, 1);
+
+              console.log("Delted two items, length: " + GeoQuestQuestions.length);
+}
+
+export default function Game() {
+    const gameQuestions = [
+        {
+            mainQuestion: "",
+            mainQuestionOptions: ["", "", ""],
+            mainQuestionCorrectAnswer: "",
+
+            subQuestions: ["?", "?", "?"],
+            subQuestionOptions: [["", "", ""], ["", "", ""], ["", "", ""]],
+            subQuestionsCorrectAnswers: ["", "", ""],
+        }
+    ]
+
+  const questions = [
+    {
+      question: "Къде се намира обектът от снимката?",
+      imageSrc: "/game-question-images/testImage1.jpg",
+      options: ["В сервиза", "На магистралата", "В Тракия"],
+      correctAnswer: "На магистралата",
+    },
+    {
+      question: "Какъв е цветът на небето?",
+      imageSrc: "/game-question-images/testImage2.jpg",
+      options: ["Син", "Червен", "Зелен"],
+      correctAnswer: "Син",
+    },
+    // Можете да добавите още въпроси тук
+  ];
+
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isAnswerSelected, setIsAnswerSelected] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+
+  const currentQuestion = GeoQuestQuestions[currentQuestionIndex];
+
+  /*
+  // Функция за избор на отговор
+  const handleOptionSelect = (selectedOption: string) => {
+    if (!showResult) {
+      setSelectedAnswer(selectedOption); // Избиране на отговор
+      setIsAnswerSelected(true); // Активиране на бутона "Продължи"
+    }
+  };
+
+  // Функция за натискане на "Продължи"
+  const handleSubmitAnswer = () => {
+    setShowResult(true); // Показваме резултата
+  };
+
+  // Функция за преминаване към следващ въпрос
+  const handleNextQuestion = () => {
+    setIsAnswerSelected(false); // Нулиране на избора
+    setShowResult(false); // Скриване на резултата
+    setSelectedAnswer(null); // Нулиране на избора на отговор
+    setCurrentQuestionIndex((prevIndex) => (prevIndex + 1) % GeoQuestQuestions.length); // Преминаване към следващия въпрос
+  };
+
+  const handleNextSubQuestion = () => {
+
+  };
+
+  InitQuestions();
+
+  
+  let message: string = currentQuestion.mainQuestion + "########################";
+  console.log(message);
+  console.log("Length: " + GeoQuestQuestions.length);
+  */
+
+  
+  return (
+    <>
+      <Navbar />
+      <MainContent
+        content={
+          <main className="flex text-black flex-col items-center justify-center flex-grow bg-gray-100 py-20 pt-1">
+            <div className="bg-white shadow-lg rounded-lg p-8 max-w-10x w-full">
+              <h1 className="text-3xl font-bold text-center mb-6">Игра</h1>
+
+              <GameQuestion               
+                question={currentQuestion.mainQuestion}
+                imageSrc={currentQuestion.imageURL}
+                options={currentQuestion.mainQuestionOptions}
+                onOptionSelect={handleOptionSelect}
+                selectedAnswer={selectedAnswer}
+                isAnswerSelected={isAnswerSelected}
+                showResult={showResult} // Подаваме информация дали резултатът е показан
+                correctAnswer={currentQuestion.mainQuestionCorrectAnswer} // Подаваме правилния отговор
+              />
+              
+              {/* Бутонът "Продължи" е активен само ако е избран отговор */}
+              {!showResult && 
+                (
+                    <div className="flex justify-center mt-6">
+                        <button onClick={handleSubmitAnswer} disabled={!isAnswerSelected} className={`px-6 py-2 text-white rounded ${isAnswerSelected ? "bg-blue-500" : "bg-gray-300"} `}>
+                            Продължи
+                        </button>
+                    </div>
+                )
+              }
+
+              {/* Резултати след натискане на "Продължи" */}
+              {showResult && 
+                (
+                    <div className="mt-4 text-center">
+                        <p>Избран отговор: {selectedAnswer}</p>
+
+                        <p className={selectedAnswer === currentQuestion.mainQuestionCorrectAnswer ? "text-green-600" : "text-red-600"}>
+                            {selectedAnswer === currentQuestion.mainQuestionCorrectAnswer ? "Правилен отговор!" : "Неправилен отговор."}
+                        </p>
+
+                        <div className="flex justify-center mt-6">
+                            <button onClick={handleNextQuestion} className="px-6 py-2 bg-green-500 text-white rounded">
+                                Следващ въпрос
+                            </button>
+                        </div>
+                    </div>
+                )
+              }
+            </div>
+          </main>
+        }
+      />
+      <Footer />
+    </>
+  );
+}
+
+/*
+"use client"
+
+import Navbar from "@/components/navbar";
+import MainContent from "@/components/main-content";
+import Footer from "@/components/footer";
+import GameQuestion from "@/components/game-question";
+
+export default function Game() {
+    const handleOptionSelect = (selectedOption: string) => {
+        console.log("Избран отговор:", selectedOption);
+    };
+
+    
+    return (
+        <>
+            <Navbar/>
+            <MainContent 
+                content={
+                    <main className="flex flex-col items-center justify-center flex-grow bg-gray-100 py-20 pt-1">
+                        <div className="bg-white shadow-lg rounded-lg p-8 max-w-10x w-full">
+                            <h1 className="text-3xl font-bold text-center mb-6">Игра</h1>
+
+                            <GameQuestion
+                                question="Къде се намира обектът от снимката?"
+                                imageSrc="/game-question-images/testImage1.jpg" // Path to your image
+                                options={["В сервиза", "На магистралата", "В Тракия"]}
+                                onOptionSelect={handleOptionSelect} // Passing event handler here
+                            />
+                        </div>
+                    </main>
+                }/>
+            <Footer/>
+        </>
+    );
+}
+*/
