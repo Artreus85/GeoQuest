@@ -24,39 +24,11 @@ export default function RegisterForm() {
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
-    //const [user, loading, errorMessage] = useAuthState(firebase.auth());
-
     const router = useRouter();
   
     const handleRegister = async (e: React.FormEvent) => {
       e.preventDefault();
   
-      /*
-      if (username.length >= 10) {
-        setError("Username is too long");
-        return;
-      }
-  
-      const gmailPattern = /^[^\s@]+@gmail\.com$/;
-      if (!gmailPattern.test(email)) {
-        setError("Please enter a valid Gmail address");
-        return;
-      }
-  
-      const usernamePattern = /^[a-zA-Z0-9]+$/;
-      if (!username || !usernamePattern.test(username)) {
-        setError("Please enter a valid username");
-        return;
-      }
-  
-      if (password.length < 6) {
-        setError("Please enter a valid password");
-        return;
-      }
-        */
-      
-      //setError(null);
-
       try {
         const registeredUser = await registerWithEmail(
           email,
@@ -68,7 +40,7 @@ export default function RegisterForm() {
 
         if (registeredUser) {
           await registeredUser.reload(); 
-          router.push("/about-us");
+          router.push("/game");
         }
       } catch (error) {
         if (error instanceof Error) {

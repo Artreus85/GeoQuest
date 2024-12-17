@@ -1,28 +1,48 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/app/FirebaseDB/firebase.config";// Assuming you have Firebase initialized in a file called firebaseConfig
-import { useRouter } from 'next/navigation'; // You can use this to redirect after logging out
-import Link from 'next/link'; // Import Link from Next.js
+import { auth, db } from "@/app/FirebaseDB/firebase.config";
+import Link from 'next/link';
 import { useAuthState } from "react-firebase-hooks/auth";
 import firebase from "firebase/compat/app";
 import { doc, getDoc } from "firebase/firestore";
 import Game from "@/app/game/page";
 import { onAuthStateChanged, updateCurrentUser, User } from "firebase/auth";
+import { getUserRole } from "@/app/FirebaseDB/AuthContext";
+import { useRouter } from "next/navigation";
 
 const Navbar: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [points, setPoints] = useState<number | null>(null); // Точки на потребителя
+  const [points, setPoints] = useState<number | null>(null); 
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [user, loading, error] = useAuthState(auth);
-  
+
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userId, setUserId] = useState<string>("");
 
   const router = useRouter();
-  
+
+const fetchUserRole = async (uid: string) => {
+  try {
+    const userDoc = await getDoc(doc(db, "Users", uid));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      setIsAdmin(userData.role === "admin"); 
+    }
+    else {
+      console.error("No user role found");
+      setIsAdmin(false);
+    }
+  } catch (error) {
+    console.error("Error fetching user role: ", error);
+    setIsAdmin(false);
+  }
+};
+
+ const getCurrentUser = (): any => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -30,107 +50,37 @@ const Navbar: React.FC = () => {
 
         setCurrentUser(user);
         setUserId(user.uid); 
+
+        return user;
       } 
       else {
         console.log("No user is signed in");
 
         setCurrentUser(null);
         setUserId("");
+        
+        return user;
       }
     });
   
     return () => unsubscribe(); 
-  }, []);
+  });}
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsLoggedIn(true);
-        fetchUserRole(user.uid); // Fetch user role when logged in
+        fetchUserRole(user.uid); 
       }
       else {
         setIsLoggedIn(false);
-        setIsAdmin(false); // Reset the admin state when logged out
-      }
-    });
-
-    return () => unsubscribe(); // Cleanup on unmount
-  }, []);
-
-  const fetchUserRole = async (uid: string) => {
-    try {
-      const userDoc = await getDoc(doc(db, "Users", uid));
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setIsAdmin(userData.role === "admin"); 
-      }
-      else {
-        console.error("No user role found");
         setIsAdmin(false);
       }
-    } catch (error) {
-      console.error("Error fetching user role: ", error);
-      setIsAdmin(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await auth.signOut(); 
-      setIsLoggedIn(false); 
-
-      router.push("/login"); 
-    } 
-    catch (error) {
-      console.error("Error signing out: ", error); // Handle errors
-    }
-  };
-
-  // Функции за управление на менюто
-  const toggleDropdown = () => setDropdownOpen(!isDropdownOpen);
-  const closeDropdown = () => setDropdownOpen(false);
-
-  const fetchUserPoints = async (userId: string): Promise<number | null> => {
-    try {
-      const userDocRef = doc(db, "Users", userId);
-      const userDocSnapshot = await getDoc(userDocRef);
-  
-      if (userDocSnapshot.exists()) {
-        const userPoints = userDocSnapshot.data().points;
-        return userPoints || 0; // Return points or default to 0
-      } else {
-        console.error("No document found for user ID");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching user points:", error);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setIsLoggedIn(true);
-  
-        const userId = user.uid;
-
-        // Вземане на запис с точките на потребителя
-        fetchUserPoints(userId).then((userPoints) => {
-          if (userPoints !== null) {
-            setPoints(userPoints);
-          }
-        });
-      } 
-      else {
-        setIsLoggedIn(false);
-        setPoints(null);
-      }
     });
-  
+
     return () => unsubscribe(); 
   }, []);
+  
 
   const getUserField = async (userId: string, fieldName: string) => {
     try {
@@ -153,6 +103,61 @@ const Navbar: React.FC = () => {
       return null;
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut(); 
+      setIsLoggedIn(false); 
+
+      router.push("/login"); 
+    } 
+    catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
+  const toggleDropdown = () => setDropdownOpen(!isDropdownOpen);
+  const closeDropdown = () => setDropdownOpen(false);
+
+  const fetchUserPoints = async (userId: string): Promise<number | null> => {
+    try {
+      const userDocRef = doc(db, "Users", userId);
+      const userDocSnapshot = await getDoc(userDocRef);
+  
+      if (userDocSnapshot.exists()) {
+        const userPoints = userDocSnapshot.data().points;
+        return userPoints || 0;
+      } else {
+        console.error("No document found for user ID");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching user points:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsLoggedIn(true);
+  
+        const userId = user.uid;
+
+        fetchUserPoints(userId).then((userPoints) => {
+          if (userPoints !== null) {
+            setPoints(userPoints);
+          }
+        });
+      } 
+      else {
+        setIsLoggedIn(false);
+        setPoints(null);
+      }
+    });
+  
+    return () => unsubscribe(); 
+  }, []);
 
   return (
     <nav className="bg-[#457B9D] text-white px-6 py-4">
@@ -177,7 +182,8 @@ const Navbar: React.FC = () => {
 
           {isAdmin && (
             <>
-              <Link href="/add-question" className="text-xl font-bold hover:underline"> Добави въпрос </Link>         
+              <Link href="/add-question" className="text-xl font-bold hover:underline"> Добави въпрос </Link> 
+              <Link href="/test" className="text-xl font-bold hover:underline"> Тест </Link>        
             </>
           )}
         </div>
@@ -244,48 +250,3 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
-
-/*
-"use client"
-
-import Link from "next/link";
-import Image from "next/image";
-import React, { useState } from "react";
-
-
-const Navbar: React.FC = () => {
-  return (
-      <nav className="bg-[#457B9D] text-white px-6 py-4">
-        
-        <div className="container mx-auto flex justify-between items-center">
-
-          <span className="text-2xl font-bold">
-            <Link href="#">
-              <img className="max-w-14" src="./logo.png" alt="GeoQuest" />
-            </Link>
-          </span>
-
-          <div className="flex space-x-36">
-            <Link href="/game" className="text-xl font-bold hover:underline"> Играй </Link> 
-            <Link href="/leaderboard" className="text-xl font-bold hover:underline"> Класация </Link> 
-            <Link href="/about-us" className="text-xl font-bold hover:underline"> За нас </Link> 
-          </div>
-
-          <div className="flex justify-end">
-            <Link href="/login" className="text-xl font-bold hover:underline"> Влез </Link> 
-            <Link href="/register" className="text-xl font-bold hover:underline"> Регистрирай се </Link> 
-          </div>
-
-          <div>
-            <Link href="#"> 
-              <Image className="max-w-14" src="/user.png" alt="Account button" width={56} height={20}/>
-            </Link>
-          </div>
-
-        </div>
-      </nav>
-  );
-};
-
-export default Navbar;
-*/

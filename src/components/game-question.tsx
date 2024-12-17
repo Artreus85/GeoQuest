@@ -49,7 +49,7 @@ const GameQuestion: React.FC<QuizQuestionProps> = ({
                   : ""
             }`}
             onClick={() => onOptionSelect(option)}
-            disabled={isAnswerSelected} // Блокираме възможността за промяна след избор
+            disabled={isAnswerSelected} 
           >
             {option}
           </button>

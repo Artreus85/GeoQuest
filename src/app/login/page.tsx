@@ -23,7 +23,6 @@ export default function LoginForm() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation for identifier (email or username)
         if (!identifier) {
             setError("Please enter your username or email.");
             return;

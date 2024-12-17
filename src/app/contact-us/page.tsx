@@ -12,6 +12,34 @@ export default function ContactForm() {
     const [status, setStatus] = useState("");
 
     const router = useRouter();
+    
+    const handleSendEmail = async (e: { preventDefault: () => void; }) => {
+        e.preventDefault();
+
+        try {
+            const response = await fetch('/api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, message }),
+            });
+
+            if (response.ok) {
+                setStatus("Your email has been sent successfully!");
+                setMessage("");
+                setEmail("");
+                console.log(status);
+            } 
+            else {
+                setStatus("Failed to send email. Please try again.");
+                console.log(status);
+            }
+        } catch (error) {
+            console.error(error);
+            setStatus("An error occurred. Please try again later.");
+        }
+    };
 
     return (
         <>
@@ -59,6 +87,7 @@ export default function ContactForm() {
                       <button 
                         type="submit" 
                         className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600"
+                        onClick={handleSendEmail}
                       >
                         Изпрати
                       </button>

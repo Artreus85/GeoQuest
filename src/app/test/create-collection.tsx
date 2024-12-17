@@ -1,6 +1,5 @@
 import { collection, doc, setDoc } from "firebase/firestore";
-import { db } from "./FirebaseDB/firebase.config";
-
+import { db } from "../FirebaseDB/firebase.config";
 
 async function createCollectionAndDocument() {
     try {

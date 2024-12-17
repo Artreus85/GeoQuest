@@ -156,6 +156,53 @@ export default function TestPage() {
 }
 */
 
-export default function TestPage() {
+/*
+"use client"
+
+import React, { useState } from 'react';
+import { db } from '../FirebaseDB/firebase.config'; 
+import { collection, addDoc } from 'firebase/firestore'; 
+import { questions } from '../questions';
+
+export default function TestPage() { 
+  async function insertQuestions() {
+    try {
+      // Reference to the Firestore collection where questions will be stored
+      const questionsCollectionRef = collection(db, 'Questions');
+      
+      for (const questionData of questions) {
+        // Add a new document to the Questions collection
+        const questionDocRef = await addDoc(questionsCollectionRef, {
+          question: questionData.question,
+          imageSrc: questionData.imageSrc,
+          options: questionData.options,
+          correctAnswer: questionData.correctAnswer,
+        });
   
+        // Add subQuestions to Firestore under the corresponding question
+        const subQuestionsCollectionRef = collection(db, 'Questions', questionDocRef.id, 'SubQuestions');
+        
+        for (const subQuestion of questionData.subQuestions) {
+          await addDoc(subQuestionsCollectionRef, {
+            question: subQuestion.question,
+            options: subQuestion.options,
+            correctAnswer: subQuestion.correctAnswer,
+          });
+        }
+        
+        console.log(`Question added with ID: ${questionDocRef.id}`);
+      }
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+  }
+
+  return (
+    <button onClick={insertQuestions}>Add questions</button>
+  );
+}
+*/
+
+export default function TestPage() {
+  return;
 }

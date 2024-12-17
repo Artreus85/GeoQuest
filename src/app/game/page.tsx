@@ -1,157 +1,159 @@
-"use client";
+"use client"
 
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../FirebaseDB/firebase.config";
 import Navbar from "@/components/navbar";
 import MainContent from "@/components/main-content";
 import Footer from "@/components/footer";
 import GameQuestion from "@/components/game-question";
-import { onAuthStateChanged, updateCurrentUser, User } from "firebase/auth";
-import { auth, db } from "../FirebaseDB/firebase.config";
-import { doc, increment, updateDoc } from "firebase/firestore";
-
-export const questions = [
-  // Първи въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question1_TheEiffelTower.jpg",
-    options: ["Германия", "Франция", "САЩ"],
-    correctAnswer: "Франция",
-  },
-  // Втори въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question2_TheGreatWallOfChina.jpg",
-    options: ["Китай", "Камоджа", "Нидерландия"],
-    correctAnswer: "Китай",
-  },
-  // Трети въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question3_TheColosseum.jpg",
-    options: ["Италия", "Хърватия", "Швеция"],
-    correctAnswer: "Италия",
-  },
-  // Четвърти върпос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question4_TheStatueOfLiberty.jpg",
-    options: ["САЩ", "Боливия", "Канада"],
-    correctAnswer: "САЩ",
-  },
-  // Пети въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question5_MachuPicchu.jpg",
-    options: ["Бразилия", "Аржентина", "Перу"],
-    correctAnswer: "Перу",
-  },
-  // Шести въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question6_TajMahal.jpg",
-    options: ["Индия", "Оман", "Йемен"],
-    correctAnswer: "Индия",
-  },
-  // Седми въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question7_TheSydneyOpera.jpg",
-    options: ["Австрия", "Нова Зеландия", "Австралия"],
-    correctAnswer: "Австралия",
-  },
-  // Осми въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question8_JesusChristStatue.jpg",
-    options: ["Аржентина", "Бразилия", "Чили"],
-    correctAnswer: "Бразилия",
-  },
-  // Девети въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question9_TheGizaPyramids.jpg",
-    options: ["Египет", "Намибия", "Либия"],
-    correctAnswer: "Египет",
-  },
-  // Десети въпрос
-  {
-    question: "Къде се намира обектът от снимката?",
-    imageSrc: "/game-question-images/question10_TheAngkorWat.jpg",
-    options: ["Тайланд", "Камбоджа", "Виетнам"],
-    correctAnswer: "Камбоджа",
-  }
-];
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../FirebaseDB/firebase.config";
+import { doc, updateDoc, increment } from "firebase/firestore";
+import { Question, SubQuestion } from "../types";
 
 export default function Game() {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [isAnswerSelected, setIsAnswerSelected] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userId, setUserId] = useState<string>("");
-
-  const currentQuestion = questions[currentQuestionIndex];
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("User signed in: ", user);
-
-        setCurrentUser(user);
-        setUserId(user.uid);
-      } 
-      else {
-        console.log("No user is signed in");
-
-        setCurrentUser(null);
-        setUserId("");
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+    const [isAnswerSelected, setIsAnswerSelected] = useState<boolean>(false);
+    const [showResult, setShowResult] = useState<boolean>(false);
+    const [isSubQuestion, setIsSubQuestion] = useState<boolean>(false);
+    const [subQuestionIndex, setSubQuestionIndex] = useState<number>(0);
+    const [currentSubIndex, setCurrentSubIndex] = useState<number>(0);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [isMainQuestionCorrect, setIsMainQuestionCorrect] = useState<boolean>(false);
+  
+    // Fetch questions from Firestore
+    useEffect(() => {
+      const fetchQuestions = async () => {
+        const querySnapshot = await getDocs(collection(db, "Questions"));
+        const questionsData: Question[] = []; // Explicitly set type for `questionsData`
+  
+        querySnapshot.forEach((doc) => {
+          const questionData = doc.data() as Question; // Cast the data to the `Question` type
+          questionsData.push(questionData);
+        });
+  
+        setQuestions(questionsData); // Store questions in state
+      };
+  
+      fetchQuestions();
+    }, []);
+  
+    const currentQuestion = questions[currentQuestionIndex]; // May be undefined if questions are empty
+    const currentSubQuestion = currentQuestion?.subQuestions?.[subQuestionIndex];
+  
+    // Ensure the current question exists before accessing properties
+    if (!currentQuestion) {
+      return (
+        <div>Loading questions...</div> // Or you can show a spinner/loading state here
+      );
+    }
+  
+    const handleAnswer = (answer: string) => {
+      if (!currentQuestion) return; // Prevent accessing undefined question
+  
+      if (!isMainQuestionCorrect) {
+        if (answer === currentQuestion.correctAnswer) {
+          setIsMainQuestionCorrect(true);
+          console.log("Correct! Now showing sub-questions.");
+        } else {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          console.log("Incorrect. Next main question.");
+        }
+      } else {
+        const subQuestion = currentQuestion.subQuestions[currentSubIndex];
+        if (answer === subQuestion.correctAnswer) {
+          if (currentSubIndex + 1 < currentQuestion.subQuestions.length) {
+            setCurrentSubIndex(currentSubIndex + 1);
+          } else {
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+            setIsMainQuestionCorrect(false);
+            setCurrentSubIndex(0);
+          }
+        } else {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          setIsMainQuestionCorrect(false);
+        }
       }
-    });
+    };
   
-    return () => unsubscribe(); 
-  }, []);
-
-  // Функция за Update операция
-  const updateUserDocument = async (userId: string, updates: Record<string, any>) => {
-    try {
-      const userDocRef = doc(db, "Users", userId);
-      await updateDoc(userDocRef, updates);
+    // Keep this `useEffect` for managing user authentication state, always executed at top
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setUserId(user.uid);
+        } else {
+          setUserId(null);
+        }
+      });
   
-      console.log("User document updated successfully");
-    } 
-    catch (error) {
-      console.error("Error updating user document: ", error);
-    }
-  };
-
-  // Функция за избор на отговор
-  const handleOptionSelect = (selectedOption: string) => {
-    if (!showResult) {
-      setSelectedAnswer(selectedOption); // Избиране на отговор
-      setIsAnswerSelected(true); // Активиране на бутона "Продължи"
-    }
-  };
-
-  // Функция за натискане на бутона "Продължи"
-  const handleSubmitAnswer = () => {
-    setShowResult(true); // Показваме резултата
-
-    if(selectedAnswer === currentQuestion.correctAnswer) {
-      increasePoints(10);
-    }
-  };
-
-  // Функция за преминаване към следващ въпрос
-  const handleNextQuestion = () => {
-    setIsAnswerSelected(false); // Нулиране на избора
-    setShowResult(false); // Скриване на резултата
-    setSelectedAnswer(null); // Нулиране на избора на отговор
-    setCurrentQuestionIndex((prevIndex) => (prevIndex + 1) % questions.length); // Преминаване към следващия въпрос
-  };
+      return () => unsubscribe();
+    }, []);
   
-  const increasePoints = async (pointsToAdd: number) => {
-    await updateUserDocument(userId, { points: increment(pointsToAdd) });
-  }
+    const updateUserDocument = async (userId: string, updates: Record<string, any>) => {
+      try {
+        const userDocRef = doc(db, "Users", userId);
+        await updateDoc(userDocRef, updates);
+        console.log("User document updated successfully");
+      } catch (error) {
+        console.error("Error updating user document: ", error);
+      }
+    };
+  
+    const handleOptionSelect = (selectedOption: string) => {
+      if (!showResult) {
+        setSelectedAnswer(selectedOption);
+        setIsAnswerSelected(true);
+      }
+    };
+  
+    const handleSubmitAnswer = () => {
+      setShowResult(true);
+  
+      const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+      setIsMainQuestionCorrect(isCorrect);
+  
+      if (isCorrect && userId) {
+        increasePoints(10);
+      }
+    };
+  
+    const handleNextQuestion = () => {
+      if (isSubQuestion) {
+        if (subQuestionIndex < currentQuestion.subQuestions.length - 1) {
+          setSubQuestionIndex((prev) => prev + 1);
+        } else {
+          moveToNextMainQuestion();
+        }
+      } else if (!isSubQuestion && currentQuestion.subQuestions?.length) {
+        setIsSubQuestion(true);
+      } else {
+        moveToNextMainQuestion();
+      }
+  
+      resetState();
+    };
+  
+    const moveToNextMainQuestion = () => {
+      setIsSubQuestion(false);
+      setSubQuestionIndex(0);
+      setCurrentQuestionIndex((prev) => (prev + 1) % questions.length);
+    };
+  
+    const increasePoints = async (pointsToAdd: number) => {
+      if (userId) {
+        await updateUserDocument(userId, { points: increment(pointsToAdd) });
+      }
+    };
+  
+    const resetState = () => {
+      setSelectedAnswer(null);
+      setIsAnswerSelected(false);
+      setShowResult(false);
+      setIsMainQuestionCorrect(false);
+    };
 
   return (
     <>
@@ -163,56 +165,48 @@ export default function Game() {
               <h1 className="text-3xl font-bold text-center mb-6">Игра</h1>
 
               <GameQuestion
-                question={currentQuestion.question}
+                question={isSubQuestion ? currentSubQuestion?.question : currentQuestion.question}
                 imageSrc={currentQuestion.imageSrc}
-                options={currentQuestion.options}
+                options={isSubQuestion ? currentSubQuestion?.options : currentQuestion.options}
                 onOptionSelect={handleOptionSelect}
                 selectedAnswer={selectedAnswer}
-                showResult={showResult} // Подаваме информация дали резултатът е показан
-                correctAnswer={currentQuestion.correctAnswer} // Подаваме правилния отговор
-                isAnswerSelected={false}              
+                showResult={showResult}
+                correctAnswer={isSubQuestion ? currentSubQuestion?.correctAnswer : currentQuestion.correctAnswer}
+                isAnswerSelected={isAnswerSelected}
               />
 
-              {/* Бутонът "Продължи" е активен само ако е избран отговор */}
-              {!showResult && (
-                <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-6">
+                {!showResult ? (
                   <button
                     onClick={handleSubmitAnswer}
-                    disabled={!isAnswerSelected} // Бутонът е деактивиран докато не се избере отговор
-                    className={`px-6 py-2 text-white rounded ${
-                      isAnswerSelected ? "bg-blue-500" : "bg-gray-300"
-                    }`}
+                    disabled={!isAnswerSelected}
+                    className="px-6 py-2 bg-blue-500 text-white rounded"
                   >
                     Продължи
                   </button>
-                </div>
-              )}
+                ) : (
+                  <button onClick={handleNextQuestion} className="px-6 py-2 bg-green-500 text-white rounded">
+                    Следващ въпрос
+                  </button>
+                )}
+              </div>
 
-              {/* Резултати след натискане на "Продължи" */}
               {showResult && (
                 <div className="mt-4 text-center">
                   <p
-                    className={
-                      selectedAnswer === currentQuestion.correctAnswer
-                        ? "text-green-600"
-                        : "text-red-600"
+                    className={selectedAnswer === currentQuestion.correctAnswer || selectedAnswer === currentSubQuestion?.correctAnswer
+                      ? "text-green-600"
+                      : "text-red-600"
                     }
                   >
-                    {selectedAnswer === currentQuestion.correctAnswer
+                    {selectedAnswer === currentQuestion.correctAnswer || selectedAnswer === currentSubQuestion?.correctAnswer
                       ? "Правилен отговор!"
-                      : "Неправилен отговор."}
+                      : "Неправилен отговор!"}
                   </p>
                   <p>Избран отговор: {selectedAnswer}</p>
-                  {selectedAnswer === currentQuestion.correctAnswer ? "+10 точки" : "Отговорът e: " + currentQuestion.correctAnswer} 
-
-                  <div className="flex justify-center mt-6">
-                    <button
-                      onClick={handleNextQuestion}
-                      className="px-6 py-2 bg-green-500 text-white rounded"
-                    >
-                      Следващ въпрос
-                    </button>
-                  </div>
+                  {
+                    selectedAnswer === currentQuestion.correctAnswer ? "+10 точки" : selectedAnswer === currentSubQuestion?.correctAnswer ? "+5 точки" : ""
+                  }
                 </div>
               )}
             </div>
@@ -223,4 +217,3 @@ export default function Game() {
     </>
   );
 }
-
